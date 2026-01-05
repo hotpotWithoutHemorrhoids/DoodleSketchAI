@@ -11,40 +11,21 @@
 
       <!-- 主要内容 -->
       <main class="main">
-        <!-- 上传区域 -->
+        <!-- 跳转到编辑页面按钮 -->
         <section class="upload-section">
           <div class="upload-container">
-            <el-upload
-              class="video-uploader"
-              drag
-              :action="uploadUrl"
-              :before-upload="beforeUpload"
-              :on-progress="onUploadProgress"
-              :on-success="onUploadSuccess"
-              :on-error="onUploadError"
-              :file-list="fileList"
-              :auto-upload="true"
-              :show-file-list="false"
-              accept="video/*"
-            >
-              <div v-if="!uploading" class="upload-content">
-                <el-icon class="upload-icon"><upload-filled /></el-icon>
-                <div class="upload-text">
-                  <p>点击或拖拽视频文件到此处上传</p>
-                  <p class="upload-hint">支持 MP4, AVI, MOV, WMV, FLV, WebM 格式</p>
-                  <p class="upload-hint">文件大小不超过 100MB</p>
-                </div>
-              </div>
-              <div v-else class="uploading-content">
-                <el-progress
-                  type="circle"
-                  :percentage="uploadProgress"
-                  :width="80"
-                  :stroke-width="6"
-                />
-                <p class="uploading-text">上传中... {{ uploadProgress }}%</p>
-              </div>
-            </el-upload>
+            <div class="jump-button-container">
+              <el-button 
+                class="jump-button" 
+                type="primary" 
+                size="large"
+                @click="goToVideoEditor"
+              >
+                <el-icon><video-play /></el-icon>
+                <span>进入视频编辑页面</span>
+              </el-button>
+              <p class="jump-hint">点击进入视频编辑页面，上传并处理您的视频</p>
+            </div>
           </div>
         </section>
 
@@ -128,16 +109,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UploadFilled, VideoPlay, Timer, Brush, Download } from '@element-plus/icons-vue'
-import type { Video, UploadFile } from '@/types'
+import { VideoPlay, Timer, Brush, Download } from '@element-plus/icons-vue'
+import type { Video } from '@/types'
 
 const router = useRouter()
 
 // 响应式数据
-const uploadUrl = '/api/videos/upload'
-const uploading = ref(false)
-const uploadProgress = ref(0)
-const fileList = ref<UploadFile[]>([])
+const showUploadDialog = ref(false)
 const recentVideos = ref<Video[]>([])
 
 // 生命周期
@@ -146,47 +124,14 @@ onMounted(() => {
 })
 
 // 方法
-const beforeUpload = (file: File) => {
-  // 文件类型检查
-  const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm']
-  if (!allowedTypes.includes(file.type)) {
-    ElMessage.error('不支持的文件格式，请上传视频文件')
-    return false
-  }
-
-  // 文件大小检查 (100MB)
-  const maxSize = 100 * 1024 * 1024
-  if (file.size > maxSize) {
-    ElMessage.error('文件大小不能超过 100MB')
-    return false
-  }
-
-  uploading.value = true
-  uploadProgress.value = 0
-  return true
+const goToVideoEditor = () => {
+  router.push('/video/editor')
 }
 
-const onUploadProgress = (event: any) => {
-  uploadProgress.value = Math.round(event.percent)
-}
-
-const onUploadSuccess = (response: any) => {
-  uploading.value = false
-  uploadProgress.value = 0
-  
-  if (response.success) {
-    ElMessage.success('视频上传成功')
-    // 跳转到视频编辑页面
-    router.push(`/video/${response.data.id}`)
-  } else {
-    ElMessage.error(response.message || '上传失败')
-  }
-}
-
-const onUploadError = (error: any) => {
-  uploading.value = false
-  uploadProgress.value = 0
-  ElMessage.error('上传失败，请重试')
+const onVideoUploadSuccess = (response: any) => {
+  ElMessage.success('视频上传成功')
+  // 跳转到视频编辑页面
+  router.push(`/video/${response.data.id}`)
 }
 
 const loadRecentVideos = async () => {
@@ -289,65 +234,48 @@ const getStatusText = (status: string) => {
     margin: 0 auto;
   }
 
-  .video-uploader {
-    width: 100%;
+  .jump-button-container {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
 
-    :deep(.el-upload) {
-      width: 100%;
-      border: 2px dashed rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-5px);
+    }
+
+    .jump-button {
+      padding: 20px 40px;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+      .el-icon {
+        margin-right: 10px;
+        font-size: 1.5rem;
+      }
+
+      span {
+        font-weight: 600;
+      }
 
       &:hover {
-        border-color: rgba(255, 255, 255, 0.6);
-        background: rgba(255, 255, 255, 0.15);
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: scale(1.05);
       }
     }
 
-    :deep(.el-upload-dragger) {
-      width: 100%;
-      height: 200px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: transparent;
-      border: none;
-    }
-
-    .upload-content {
-      text-align: center;
-      color: white;
-
-      .upload-icon {
-        font-size: 48px;
-        margin-bottom: 20px;
-        opacity: 0.8;
-      }
-
-      .upload-text {
-        p {
-          margin: 8px 0;
-          font-size: 16px;
-        }
-
-        .upload-hint {
-          font-size: 14px;
-          opacity: 0.7;
-        }
-      }
-    }
-
-    .uploading-content {
-      text-align: center;
-      color: white;
-
-      .uploading-text {
-        margin-top: 16px;
-        font-size: 16px;
-      }
+    .jump-hint {
+      margin-top: 20px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
     }
   }
 }
