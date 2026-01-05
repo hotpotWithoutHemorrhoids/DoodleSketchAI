@@ -15,6 +15,14 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
+    path: '/video/editor',
+    name: 'VideoEditorNew',
+    component: () => import('@/views/VideoEditor.vue'),
+    meta: {
+      title: '视频编辑器 - DoodleSketchAI'
+    }
+  },
+  {
     path: '/video/:id',
     name: 'VideoEditor',
     component: () => import('@/views/VideoEditor.vue'),

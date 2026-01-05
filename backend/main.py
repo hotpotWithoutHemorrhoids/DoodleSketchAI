@@ -15,12 +15,12 @@ import time
 import os
 
 from app.core.config import settings
-from app.core.database import engine, Base
-from app.api.v1.api import api_router
-from app.core.logging import setup_logging
+# from app.core.database import engine, Base  # 暂时禁用数据库
+from app.api import api_router
+# from app.core.logging import setup_logging
 
 # 设置日志
-setup_logging()
+# setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -30,11 +30,10 @@ async def lifespan(app: FastAPI):
     # 启动时执行
     logger.info("🚀 DoodleSketchAI Backend starting up...")
     
-    # 创建数据库表
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    logger.info("✅ Database tables created/verified")
+    # 确保上传目录存在
+    if settings.UPLOAD_DIR and not os.path.exists(settings.UPLOAD_DIR):
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        logger.info(f"✅ Upload directory created: {settings.UPLOAD_DIR}")
     
     yield
     
